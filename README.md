@@ -16,6 +16,14 @@ Untuk melakukan test clone, jalankan command di bawah ini
 make clone-test
 ```
 
+### Fetch
+
+Untuk melakukan test fetch, jalankan command di bawah ini
+
+```sh
+make fetch-test
+```
+
 ### Pull
 
 Untuk melakukan test pull, jalankan command di bawah ini

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/devetek/go-git/types"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
@@ -17,7 +20,7 @@ func GetURL() string {
 
 	if URL == "" {
 		Warning("GITHUB_URL not defined")
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	return URL
@@ -29,14 +32,14 @@ func GetDirectory() string {
 
 	if err != nil {
 		Warning(err.Error())
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	directory := os.Getenv("GITHUB_DIRECTORY")
 
 	if directory == "" {
 		Warning("GITHUB_DIRECTORY not defined")
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	return path.Join(dir, directory)
@@ -48,7 +51,7 @@ func GetBranch() string {
 
 	if branch == "" {
 		Warning("GITHUB_BRANCH not defined")
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	return branch
@@ -60,7 +63,7 @@ func GetUsername() string {
 
 	if username == "" {
 		Warning("GITHUB_USERNAME not defined")
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	return username
@@ -87,7 +90,7 @@ func GetEnvironments() types.GithubEnv {
 	return result
 }
 
-// GetGitCloneOpt should be used to ensure the right environment provide, return git option
+// GetGitCloneOpt should be used to ensure the right environment provide, return git clone option
 func GetGitCloneOpt() git.CloneOptions {
 	var result git.CloneOptions
 
@@ -118,7 +121,38 @@ func GetGitCloneOpt() git.CloneOptions {
 	return result
 }
 
-// GetGitPullOpt should be used to ensure the right environment provide, return git option
+// GetGitFetchOpt should be used to ensure the right environment provide, return git fetch option
+func GetGitFetchOpt() git.FetchOptions {
+	var result git.FetchOptions
+
+	username := GetUsername()
+	token := GetToken()
+	branch := GetBranch()
+
+	if token != "" {
+		result = git.FetchOptions{
+			RefSpecs: []config.RefSpec{config.RefSpec("refs/heads/" + branch + ":refs/heads/" + branch)},
+			Force:    true,
+			Auth: &http.BasicAuth{
+				Username: username, // yes, this can be anything except an empty string
+				Password: token,
+			},
+			Progress: os.Stdout,
+		}
+
+		return result
+	}
+
+	result = git.FetchOptions{
+		RefSpecs: []config.RefSpec{config.RefSpec("refs/heads/" + branch + ":refs/heads/" + branch)},
+		Force:    true,
+		Progress: os.Stdout,
+	}
+
+	return result
+}
+
+// GetGitPullOpt should be used to ensure the right environment provide, return git pull option
 func GetGitPullOpt() git.PullOptions {
 	var result git.PullOptions
 
@@ -146,12 +180,37 @@ func GetGitPullOpt() git.PullOptions {
 	return result
 }
 
+// GetGitCheckoutOpt should be used to ensure the right environment provide, return git checkout option
+func GetGitCheckoutOpt(hash string, branch string) (*git.CheckoutOptions, error) {
+	var result git.CheckoutOptions
+
+	if hash == "" && branch == "" {
+		return &result, errors.New("Invalid params")
+	}
+
+	if hash == "" && branch != "" {
+		result = git.CheckoutOptions{
+			Branch: plumbing.ReferenceName("refs/heads/" + branch),
+		}
+
+	}
+
+	if hash != "" && branch == "" {
+		result = git.CheckoutOptions{
+			Hash: plumbing.NewHash(hash),
+		}
+
+	}
+
+	return &result, nil
+}
+
 // CheckArgs should be used to ensure the right command line arguments are
 // passed before executing an example.
 func CheckArgs(arg ...string) {
 	if len(arg) == 0 {
 		Warning("Usage: %s %s", os.Args[0], strings.Join(arg, " "))
-		os.Exit(1)
+		os.Exit(0)
 	}
 }
 
@@ -162,7 +221,7 @@ func CheckIfError(err error) {
 	}
 
 	fmt.Printf("\x1b[31;1m%s\x1b[0m\n", fmt.Sprintf("error: %s", err))
-	os.Exit(1)
+	os.Exit(0)
 }
 
 // Info should be used to describe the example commands that are about to run.

@@ -9,8 +9,9 @@ import (
 func main() {
 	opts := utils.GetGitPullOpt()
 	directory := utils.GetDirectory()
+	URL := utils.GetURL()
 
-	utils.Info("Go to directory", directory)
+	utils.Info("git clone %s %s --recursive", URL, directory)
 
 	r, err := git.PlainOpen(utils.GetDirectory())
 
@@ -23,13 +24,8 @@ func main() {
 	// retrieving error, check in utils and then print error if error not nil
 	utils.CheckIfError(err)
 
-	ref, err := r.Head()
-
-	// retrieving error, check in utils and then print error if error not nil
-	utils.CheckIfError(err)
-
 	// Pull the latest changes from the origin remote and merge into the current branch
-	utils.Info("git pull origin %s", ref.Name())
+	utils.Info("git pull origin")
 
 	err = w.Pull(&opts)
 

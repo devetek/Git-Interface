@@ -10,11 +10,26 @@ clone-test:
 		go run clone/main.go; \
 	)
 
+fetch-test:
+	( \
+		export GITHUB_DIRECTORY=./git-kaniko; \
+		export GITHUB_USERNAME=prakasa1904; \
+		export GITHUB_BRANCH=production; \
+		go run fetch/main.go; \
+	)
+
 pull-test:
 	( \
 		export GITHUB_DIRECTORY=./git-kaniko; \
 		export GITHUB_USERNAME=prakasa1904; \
 		go run pull/main.go; \
+	)
+
+checkout-test:
+	( \
+		export GITHUB_DIRECTORY=./git-kaniko; \
+		export GITHUB_BRANCH=master; \
+		go run checkout/main.go; \
 	)
 
 build:
