@@ -1,37 +1,32 @@
+include clone/Makefile
+include fetch/Makefile
+include pull/Makefile
+include push/Makefile
+include checkout/Makefile
+
+DOCKER_USER := prakasa1904
+DOCKER_REG_BUILD := tergit-base
+DOCKER_TAG_BUILD := latest
+DOCKER_REG_RUN := tergit-run
+DOCKER_TAG_RUN := latest
+
+.PHONY: test
 test:
 	@go test ./...
 
-clone-test:
-	@rm -rf ./git-kaniko
-	( \
-		export GITHUB_URL=https://github.com/devetek/Simple-Kaniko.git; \
-		export GITHUB_DIRECTORY=./git-kaniko; \
-		export GITHUB_USERNAME=prakasa1904; \
-		go run clone/main.go; \
-	)
+.PHONY: image-build
+image-build:
+	@docker build -f base.Dockerfile -t $(DOCKER_USER)/$(DOCKER_REG_BUILD):$(DOCKER_TAG_BUILD) .
+	@docker push $(DOCKER_USER)/$(DOCKER_REG_BUILD):$(DOCKER_TAG_BUILD)
 
-fetch-test:
-	( \
-		export GITHUB_DIRECTORY=./git-kaniko; \
-		export GITHUB_USERNAME=prakasa1904; \
-		export GITHUB_BRANCH=production; \
-		go run fetch/main.go; \
-	)
+.PHONY: image-run
+image-run:
+	@docker build -f run.Dockerfile -t $(DOCKER_USER)/$(DOCKER_REG_RUN):$(DOCKER_TAG_RUN) .
+	@docker push $(DOCKER_USER)/$(DOCKER_REG_RUN):$(DOCKER_TAG_RUN)
 
-pull-test:
-	( \
-		export GITHUB_DIRECTORY=./git-kaniko; \
-		export GITHUB_USERNAME=prakasa1904; \
-		go run pull/main.go; \
-	)
-
-checkout-test:
-	( \
-		export GITHUB_DIRECTORY=./git-kaniko; \
-		export GITHUB_BRANCH=master; \
-		go run checkout/main.go; \
-	)
-
+.PHONY: build
 build:
-	@go build -o git-clone clone/main.go
-	@go build -o git-pull pull/main.go
+	@go build -ldflags="-w -s" -o git-clone clone/main.go
+	@go build -ldflags="-w -s" -o git-fetch fetch/main.go
+	@go build -ldflags="-w -s" -o git-pull pull/main.go
+	@go build -ldflags="-w -s" -o git-checkout checkout/main.go
